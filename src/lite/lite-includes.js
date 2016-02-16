@@ -5299,7 +5299,19 @@
 					return this._deleteRight(range);
 				}
 			}
-	
+			// Handle paragraph merge:  the caret is at the end of a container, container's block and nextblock are both either P or BR node 
+			// e.g.: <p>block A</p>|<p>block B</p> 
+			if(initialOffset === initialContainer.data.length) {
+				var blockA = ice.dom.getBlockParent(initialContainer, this.element),
+					blockB = ice.dom.getBlockParent( ice.dom.getNextNode(initialContainer, this.element), this.element);
+				
+				//let editor handle the paragraph boundary deletion
+				if(isNewlineNode(blockA) && isNewlineNode(blockB)) return false;
+			
+				//or we could use the next line code if the parentBlock is the block of the last container before caret. 
+				//if(isNewlineNode(parentBlock) && isNewlineNode(nextBlock)) return false;
+			}
+			
 			// Move range to position the cursor on the inside of any adjacent container that it is going
 			// to potentially delete into or after a stub element.	E.G.:	test|<em>text</em>	->	test<em>|text</em> or
 			// text1 |<img> text2 -> text1 <img>| text2
@@ -5417,7 +5429,18 @@
 				this._addDeleteTrackingToBreak(commonAncestor, {range: range, moveLeft: true});
 				return true;
 			}
-			
+			// Handle paragraph merge:  the caret is at the begining of a container, container's block and previous block are both either P or BR node.  
+			// e.g.: <p>block A</p>|<p>block B</p>
+			if(initialOffset === 0) {
+				var blockA = ice.dom.getBlockParent( ice.dom.getPrevNode(initialContainer, this.element), this.element),
+					blockB = ice.dom.getBlockParent(initialContainer, this.element);
+				
+				//let editor handle the paragraph boundary deletion
+				if(isNewlineNode(blockA) && isNewlineNode(blockB)) return false;
+				
+				//or we could use the next line code if the parentBlock is the block of the current container - after caret. 
+				//if(isNewlineNode(parentBlock) && isNewlineNode(prevBlock)) return false;
+			}
 			// Handle cases of the caret is at the start of a container or outside a text node
 			if (initialOffset === 0 || commonAncestor.nodeType !== ice.dom.TEXT_NODE) {
 			// If placed at the end of a container that cannot contain text, such as an ul element, place the caret at the end of the last item.
